@@ -4,8 +4,12 @@ author: "Madison Goldrich mpg2166"
 output: github_document
 ---
 
-```{r}
+```{r, include = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
+library(ggridges)
+library(patchwork)
+
+library(p8105.datasets)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -27,9 +31,64 @@ scale_fill_discrete = scale_fill_viridis_d
 
 ## Problem 1
 
-Load the data:
+#### Load the data:
+
 ```{r}
-library(p8105.datasets)
 data("instacart")
+
+instacart =
+  instacart |> 
+  as_tibble()
 ```
 
+#### Answer questions about the data: 
+
+The `instacart` dataset is `r nrow(instacart)` rows by `r ncol(instacart)` columns. According to the description on the course website, "The dataset contains 1,384,617 observations of 131,209 unique users, where each row in the dataset is a product from an order." Some key variables include `product_id` which identifies the product, `order_id` which identifies the order in which the product was placed, `reordered` which identifies whether the product has been ordered by the user in the past, among others. In total there are `r instacart |> select(product_id) |>  distinct() |> count()` products found in `r instacart |> select(user_id, order_id) |>  distinct() |>  count()` orders from `r instacart |> select(user_id) |> distinct() |> count()` distinct users.
+
+Below is a table summarizing the number of items ordered from each aisle. In total, there are 134 aisles, with fresh vegetables and fresh fruits having by far the most items ordered.
+
+```{r}
+instacart |> 
+  count(aisle) |> 
+  arrange(desc(n))
+```
+
+Next is a plot that shows the number of items ordered in each aisle, with aisles ordered by ascending number of items.
+
+```{r}
+instacart |> 
+  count(aisle) |> 
+  filter(n > 10000) |> 
+  mutate(aisle = fct_reorder(aisle, n)) |> 
+  ggplot(aes(x = aisle, y = n)) +
+  geom_point() +
+  labs(title = "Number of items ordered in each aisle") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+The next table shows the three most popular items in `baking ingredients`, `dog food care`, and `packaged vegetables fruits`, including the number of times each item is ordered.
+
+```{r}
+instacart |> 
+  filter(aisle %in% c("baking ingredients", "dog food care", "packaged vegetables fruits")) |> 
+  group_by(aisle) |> 
+  count(product_name) |> 
+  mutate(rank = min_rank(desc(n))) |> 
+  filter(rank < 4) |> 
+  arrange(desc(n)) |> 
+  knitr::kable()
+```
+
+Table showing the mean hour of the day at which Pink Lady Apples and Coffe Ice Cream are ordered on each day of the week. Pink lady apples are generally purchased slightly earlier in the day than coffee ice cream, except on day 5.
+
+```{r}
+instacart |> 
+  filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) |> 
+  group_by(product_name, order_dow) |> 
+  summarize(mean_hour = mean(order_hour_of_day)) |> 
+  pivot_wider(
+    names_from = order_dow,
+    values_from = mean_hour
+  ) |> 
+  knitr::kable(digits = 2)
+```
