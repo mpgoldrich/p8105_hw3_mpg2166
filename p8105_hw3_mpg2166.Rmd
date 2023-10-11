@@ -12,8 +12,8 @@ library(patchwork)
 library(p8105.datasets)
 
 knitr::opts_chunk$set(
-  fig.width = 6,
-  fig.asp = .6,
+  fig.width = 8,
+  fig.asp = .8,
   out.width = "90%"
 )
 
@@ -106,8 +106,8 @@ brfss_smart2010 =
   as_tibble() |> 
   janitor::clean_names() |> 
   rename(
-    location_abbr = locationabbr, 
-    location_desc = locationdesc,
+    state = locationabbr, 
+    location = locationdesc,
     resp_id = respid) |> 
   filter(
     topic == "Overall Health",
@@ -122,16 +122,37 @@ Below are 2 tables that show the states that were observed at 7 or more location
 ```{r}
 brfss_smart2010 |> 
   filter(year == 2002) |> 
-  distinct(location_desc, .keep_all = TRUE) |> 
-  count(location_abbr) |> 
+  distinct(location, .keep_all = TRUE) |> 
+  count(state) |> 
   filter(n >= 7) |> 
   knitr::kable()
 
 brfss_smart2010 |> 
   filter(year == 2010) |> 
-  distinct(location_desc, .keep_all = TRUE) |> 
-  count(location_abbr) |> 
+  distinct(location, .keep_all = TRUE) |> 
+  count(state) |> 
   filter(n >= 7) |> 
   knitr::kable()
+```
+
+The below code onstructs a dataset `bfss_smart2010_excellent` that is limited to Excellent responses, and contains year, state, and a variable `mean_data_value` that averages the data_value across locations within a state. 
+
+```{r}
+brfss_smart2010_excellent =
+  brfss_smart2010 |> 
+  filter(response == "Excellent") |> 
+  group_by(year, state) |> 
+  summarize(
+    mean_data_value = mean(data_value)
+  )
+```
+
+This "spaghetti" plot shows the average value over time within a state.
+
+```{r}
+brfss_smart2010_excellent |> 
+  ggplot(aes(x = year, y = mean_data_value, color = state)) +
+  geom_line(aes(group = state)) +
+  labs(title = "Spaghetti plot of mean data value over time by state")
 ```
 
