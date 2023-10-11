@@ -115,3 +115,23 @@ brfss_smart2010 =
   mutate(response = as.factor(response))
 ```
 
+#### Answer questions about the data:
+
+Below are 2 tables that show the states that were observed at 7 or more locations. The first table for the year 2002, with 6 states represented, and the second table for 2010 with 14 states.
+
+```{r}
+brfss_smart2010 |> 
+  filter(year == 2002) |> 
+  distinct(location_desc, .keep_all = TRUE) |> 
+  count(location_abbr) |> 
+  filter(n >= 7) |> 
+  knitr::kable()
+
+brfss_smart2010 |> 
+  filter(year == 2010) |> 
+  distinct(location_desc, .keep_all = TRUE) |> 
+  count(location_abbr) |> 
+  filter(n >= 7) |> 
+  knitr::kable()
+```
+
